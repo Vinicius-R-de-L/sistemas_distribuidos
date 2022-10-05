@@ -1,0 +1,42 @@
+import requests
+import json
+
+
+while True:
+    print("Escolha uma opção:")
+    print("1) Para ver a ultima leitura")
+    print("2) Ver leituras por data")
+    opcao = int(input())
+    
+    print("\n\n")
+    
+    if opcao == 1:
+        url = "http://127.0.0.1:5000/tempo/ultimo"
+        response = requests.get(url)
+        response = response.content.decode()
+        data = json.loads(response)
+        print("Temperatura: ", data['temperatura'])
+        print("Umidade: ", data['umidade'])
+        print("Luminosidade: ", data['luminosidade'])
+        print("Data: ", data['data'], " Hora: ", data['hora'])
+        print("\n\n")
+
+    if opcao == 2:
+        data = str(input('Digite a data que deseja busca (exemplo: dd-mm-aa): '))
+        data2=data
+        url = f"http://127.0.0.1:5000/tempo/{data}"
+        response = requests.get(url)
+        response = response.content.decode()
+        data = json.loads(response)
+        print("\n")
+
+        print(f"Mostrando previsões de {data2}")
+
+        for each in data['previsoes']:
+            print("\n")
+            print("Temperatura: ", each['temperatura'])
+            print("Umidade: ", each['umidade'])
+            print("Luminosidade: ", each['luminosidade'])
+            print("Data: ", each['data'], " Hora: ", each['hora'])
+
+        print("\n\n")
