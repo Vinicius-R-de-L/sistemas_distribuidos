@@ -1,4 +1,4 @@
-### Aluno: Vinicius
+### Aluno: Vinicius Ribeiro de Lima
 ### Trabalho de sistemas distribuidos
 
 
@@ -26,7 +26,10 @@ mensagens = "" # variavel para mostrar na tela as mensagens, do tipo string
 global mensagensThread2 # guardar mensagens da thread receptorGrupo para pegar essas mensagens e mostrar na tela
 mensagensThread2 = [] 
 mensagens2 = "" # variavel para mostrar na tela as mensagens do grupo, do tipo string
+
+global i
 i = 0 # variavel int para ajudar a mostrar as mensagens na tela de forma organizada (limitar o numero de mensagens que aparece por vez)
+global j
 j = 0 # mesmo proposito que a variavel i, porem para a tela grupos
 
 global pararThread # variavel global para quando o programa for fechado, fechar tambem a thread receptor 
@@ -65,7 +68,7 @@ Enviar = [
 # Layout tela "Recebidos"
 Recebidos = [  
             [sg.Text('Suas mensagens:')],
-            [sg.Button("Atualizar")],
+            #[sg.Button("Atualizar")],
             #[sg.Combo(mensagens, key="msgs", size=15)],
             #[sg.Column(msgs, scrollable=True, vertical_scroll_only=True, size=350, key="coluna")],
             [sg.Text(mensagens, key="msgs")]
@@ -121,7 +124,7 @@ def telaGrupos():
     sg.theme("DarkBlue4")
     #sg.theme("DarkPurple1")
     openGrupo = [ 
-            [sg.Text("", key='GrupoTal'), sg.Button("Update")],
+            [sg.Text("", key='GrupoTal')],# sg.Button("Update")],
             [sg.Text(mensagens2, key="msgs2")],
             [sg.InputText(do_not_clear=False, key="MensagemGrupo", size=tamanho), sg.Button("Send")],
             [sg.Button("Voltar")],
@@ -145,7 +148,7 @@ while True:
         if values['user'] != '':
             usuario = values['user']
 
-            #credentials = pika.PlainCredentials(user, senha) 
+            credentials = pika.PlainCredentials('admin', 'ads2020') 
 
             connection = pika.BlockingConnection(
             pika.ConnectionParameters('localhost',
@@ -170,12 +173,13 @@ while True:
 #### Aplicação em si --->
 
 ## Criando a tela da aplicacao
+global app
 app = sg.Window("Whatsapp 2", telasPrincipais, finalize=True)
 appGrupos = None
 
 # funcao receptor para receber as mensagens da sua respectiva fila
 def receptor():
-    #credentials = pika.PlainCredentials(user, senha)
+    credentials = pika.PlainCredentials('admin', 'ads2020')
 
     connection = pika.BlockingConnection(
         pika.ConnectionParameters('localhost',
@@ -186,14 +190,29 @@ def receptor():
     channel = connection.channel()
 
     channel.queue_declare(queue=usuario)
-
+    
     def callback(ch, method, properties, body):
+        #i = 0
+        global i
+        global mensagens
+        #mensagens = ""
         #print(" [x] Mensagem recebida %r" % body.decode('utf-8'))
         mensagensThread.append(body.decode('utf-8'))
         #print(pararThread)
+        if len(mensagensThread) > 0:
+            if i == 4:
+                i = 1
+                mensagens = "\n" + str(mensagensThread[0])
+                mensagensThread.pop(0)
+                app['msgs'].update(mensagens)
+            else:
+                i+=1
+                mensagens = mensagens + "\n" + str(mensagensThread[0])
+                mensagensThread.pop(0)
+                app['msgs'].update(mensagens)
         if pararThread == False:
             sys.exit()
-
+            
     channel.basic_consume(queue=usuario, on_message_callback=callback, auto_ack=True)
 
     #print(' [*] Aguardando mensagens')
@@ -205,7 +224,7 @@ thread.start()
 # funcao receptorGrupo para receber as mensagens do grupo
 def receptorGrupo():
     #print("Receptor Grupo")
-    #credentials = pika.PlainCredentials(user, senha)
+    credentials = pika.PlainCredentials('admin', 'ads2020')
 
     connection = pika.BlockingConnection(
         pika.ConnectionParameters('localhost',
@@ -226,7 +245,20 @@ def receptorGrupo():
 
     def callback(ch, method, properties, body):
         #print(" [x] %r" % body)
+        global j
+        global mensagens2
         mensagensThread2.append(body.decode('utf-8'))
+        if len(mensagensThread2) > 0:
+            if j == 10:
+                j = 1
+                mensagens2 = "\n" + str(mensagensThread2[0])
+                mensagensThread2.pop(0)
+                appGrupos['msgs2'].update(mensagens2)
+            else:
+                j+=1
+                mensagens2 = mensagens2 + "\n" + str(mensagensThread2[0])
+                mensagensThread2.pop(0)
+                appGrupos['msgs2'].update(mensagens2)
         if pararThread2 == False:
             sys.exit()
         #print(pararThread2)
@@ -260,19 +292,19 @@ while True:
             sg.popup("Você não digitou nenhuma mensagem!", title=":(")
 
     # Eventos da tela "Recebidos"
-    if event == "Atualizar":
+    #if event == "Atualizar":
         #print(len(mensagensThread))
-        if len(mensagensThread) > 0:
-            if i == 4:
-                i = 1
-                mensagens = "\n" + str(mensagensThread[0])
-                mensagensThread.pop(0)
-                app['msgs'].update(mensagens)
-            else:
-                i+=1
-                mensagens = mensagens + "\n" + str(mensagensThread[0])
-                mensagensThread.pop(0)
-                app['msgs'].update(mensagens)
+        #if len(mensagensThread) > 0:
+          #  if i == 4:
+           #     i = 1
+            #    mensagens = "\n" + str(mensagensThread[0])
+             #   mensagensThread.pop(0)
+              #  app['msgs'].update(mensagens)
+            #else:
+             #   i+=1
+              #  mensagens = mensagens + "\n" + str(mensagensThread[0])
+               # mensagensThread.pop(0)
+                #app['msgs'].update(mensagens)
       
 
     # Eventos da tela "Grupos"
